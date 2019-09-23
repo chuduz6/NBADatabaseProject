@@ -1,0 +1,279 @@
+                                                                     
+                                                                     
+                                                                     
+                                             
+
+Que.2)This gives us all the seasons that a player with given player id has played 
+select distinct(S.season) from SEASON as S, GAME as G, BOXSCORE as B  
+where G.id= B.game_id 
+and B.id= 'ALEXACO01'
+and start_date <=G.date
+and end_date >= G.date
+
+//final query 
+SELECT DISTINCT (
+S.season
+), count( game_id ) , sum( minutes_played ) , sum( points ) , sum( assists ) , sum( rebounds )
+FROM SEASON AS S, GAME AS G, BOXSCORE AS B
+WHERE G.id = B.game_id
+AND B.id = 'ALEXACO01'
+AND start_date <= G.date
+AND end_date >= G.date
+GROUP BY S.season
+
+
+Que. 2.2) 
+all the game ids of games that a given player with an id has played 
+select game_id from BOXSCORE as B, GAME as G 
+where B.game_id= G.id
+and B.id= 'ALEXACO01'; 
+
+select T.name, count(game_id), sum(minutes_played), sum(points), sum(assists), sum(rebounds)
+from TEAM as T, BOXSCORE as B, GAME as G 
+where B.game_id= G.id
+and G.team_id= T.id
+and B.id= 'ALEXACO01'
+group by T.id
+
+Q 3.2) This returns the total number of games played in a given season year  
+
+SELECT count(G.id)
+FROM GAME as G, SEASON as S
+WHERE SEASON = '1995'
+AND DATE >= START_DATE
+AND DATE <= END_DATE
+order by G.id 
+
+
+Q 3.3) This returns the player id and their respective total points scored when the season is given. 
+
+select B.id, sum(points) from BOXSCORE as B 
+where B.game_id in (
+select G.id 
+from GAME as G,SEASON as S 
+where G.date >=S.start_date 
+and G.date >=S.end_date 
+and S.season= '1995'
+)
+group by B.id 
+
+semi-final: 
+select f,l,i,max(p) from 
+(
+select P.first_name as f,P.last_name as l, B.id as i, sum(points) as p from BOXSCORE as B, PLAYER as P 
+where B.game_id in (
+select G.id 
+from GAME as G,SEASON as S 
+where G.date >=S.start_date 
+and G.date >=S.end_date 
+and S.season= '1995'
+) 
+and P.id= B.id
+group by B.id 
+order by sum(points) desc
+) as t
+
+4.1) Name and the BOXSCORE details of the players who has scored the highest points in NBA games 
+select first_name, last_name, B.id,minutes_played,field_goals_made, free_throws_made, rebounds,assists,steals, points,attendance, game_id 
+from BOXSCORE as B, PLAYER as P 
+where B.id= P.id
+and 
+points= (select max(points) from BOXSCORE) 
+
+4.2) 
+select T.id,team_score, opposition_team_score 
+from TEAM as T, GAME as G, TEAM as OT 
+where T.id= G.team_id and G.opposition_team_id= OT.id
+and team_score>opposition_team_score
+group by T.id 
+ 
+ 
+ select T.id, team_id, opposition_team_id, team_score, opposition_team_score , count(*) as c
+from GAME as G, TEAM as T  
+where T.id= G.team_id
+and  ( team_score> opposition_team_score or team_score< opposition_team_score)
+group by T.id
+
+select count(id) from GAME 
+where opposition_team_id = 'ATL' or team_id= 'ATL'
+and team_score < opposition_team_score 
+
+//games won by atlanta in 1995 season 
+select  count(id) from GAME as G
+where (opposition_team_id = 'ATL' 
+and team_score < opposition_team_score)
+or  (team_id = 'ATL' 
+and team_score > opposition_team_score) and id in 
+(
+select id from GAME as G , SEASON as S
+where S.season= 1995 and 
+G.date>= S.start_date and G.date <= S.end_date
+) 
+
+//
+select  T.id, count(G.id) from GAME as G, TEAM as T 
+where ( T.id= opposition_team_id 
+and team_score < opposition_team_score)
+or  (T.id= team_id
+and team_score > opposition_team_score) and G.id in 
+(
+select G.id from GAME as G , SEASON as S
+where S.season= 1995 and 
+G.date>= S.start_date and G.date <= S.end_date
+) 
+group by T.id 
+
+//
+select max(cg), tt
+from (
+select  T.id as tt , count(G.id) as cg from GAME as G, TEAM as T 
+where ( T.id= opposition_team_id 
+and team_score < opposition_team_score)
+or  (T.id= team_id
+and team_score > opposition_team_score) and G.id in 
+(
+select G.id from GAME as G , SEASON as S
+where S.season= 1995 and 
+G.date>= S.start_date and G.date <= S.end_date
+) 
+group by T.id 
+order by cg desc) as dd
+
+
+4.3 ) 
+select name from TEAM where 
+id in 
+(
+select distinct( if (team_score> opposition_team_score, team_id, opposition_team_id) )
+from GAME as G 
+where id in 
+( 
+select G.id
+from GAME as G 
+where abs(team_score-opposition_team_score)>=ALL
+(
+select abs(team_score-opposition_team_score)
+from GAME as G 
+)
+)
+)
+
+5. 
+SELECT B.id, date, game_id
+FROM BOXSCORE AS B, GAME AS G
+WHERE points >40
+AND B.id = 'JORDAMI01'
+AND G.id = B.game_id
+LIMIT 0 , 30
+
+6. Bonus 1) 
+
+select d.points, d.rebounds,d.assists from 
+( select * from BOXSCORE where id= 'ROBINDA01') as d , 
+( select * from BOXSCORE where not exists ( select * from BOXSCORE where id= 'ROBINDA01')) as  nd 
+where 
+(d.points>=nd.points and d.rebounds>=nd.rebounds and d.assists>nd.assists)
+or 
+(d.points>=nd.points and d.rebounds>nd.rebounds and d.assists>=nd.assists) 
+or 
+(d.points>nd.points and d.rebounds>=nd.rebounds and d.assists>=nd.assists)
+
+
+
+//
+
+select a.id, a.game_id
+from(select id, points, rebounds, assists, game_id from boxscore where id='ROBINDA01') as a, (select id, points, rebounds, assists, game_id from boxscore where id!='ROBINDA01') as b
+where (a.points>b.points and a.rebounds>=b.rebounds and a.assists>=b.assists) or (a.points>=b.points and a.rebounds>b.rebounds and a.assists>=b.assists) or (a.points>=b.points and a.rebounds>=b.rebounds and a.assists>b.assists)
+
+
+select id, game_id
+from boxscore
+where (id, game_id) not in
+(select id, game_id
+from boxscore
+where id ='ROBINDA01') 
+
+
+
+new
+select count(distinct(season))
+from season as s, boxscore as b, game as g
+where b.id='ALEXACO01' and s.start_date<=g.date and s.end_date>=g.date and g.id = b.game_id
+
+
+
+/// most points scored
+select id, max(s)
+from
+(select id, sum(points) as s
+from boxscore
+where game_id in
+(select distinct(game_id )
+from boxscore, season, game 
+where season = '1995' and date>=start_date and date <= end_date and game.id = boxscore.game_id)
+group by id
+order by s desc) as a
+
+
+// rough for most points
+select a.id, first_name, last_name, max(s)
+from
+(select id, sum(points) as s
+from boxscore
+where boxscore.game_id in
+                                     (
+                                     select distinct(boxscore.game_id )
+                                     from boxscore, season, game 
+                                     where season = '1995' and date>=start_date and date <= end_date and game.id = boxscore.game_id
+                                     )
+group by boxscore.id
+order by s desc) as a, player
+where player.id=a.id
+
+
+// 4.2 CMMMMMMMM
+select b.team_id, name, max(a)
+from (select team_id, count(team_id) as a
+from game
+where team_score > opposition_team_score and id in (
+                 select id
+                 from season, game
+                 where season='1995' and date >= start_date and date <= end_date
+                 )
+group by team_id
+order by a desc) as b, team
+where team.id=b.team_id
+
+
+
+// 5 question
+
+select boxscore.id, first_name, last_name, points
+from boxscore, player
+where player.id=boxscore.id and boxscore.id in 
+(select id
+from boxscore
+where points >=40
+group by id
+having count(id) > 2)
+order by boxscore.id, game_id
+
+
+
+
+// crap
+
+
+?>
+	<tr> 
+    <td> Id </td> <td>First Name </td> <td>Last Name</td> <td> Player ID </td> <td> Minutes Played</td> <td> Field Goals Made </td> <td> Free Throws Made</td> <td> Rebounds</td> <td> Assists</td> <td> Steals</td> <td> Points</td> <td> Attendance</td> <td> Game ID</td> 
+    </tr> 
+<?php
+
+
+?>
+<tr> 
+    <td><?php echo $row["FIRST_NAME"] ?> </td> <td><?php echo $row["LAST_NAME"] ?></td> <td> <?php echo $row["id"] ?> </td> <td> <?php echo $row["minutes_played"] ?></td> <td> <?php echo $row["field_goals_made"] ?></td> <td> <?php echo $row["free_throws_made"] ?></td> <td> <?php echo $row["rebounds"] ?></td> <td> <?php echo  $row["assists"] ?></td> <td> <?php echo $row["steals"] ?></td> <td> <?php echo $row["ptr"] ?></td> <td> <?php echo $row["attendance"] ?></td> <td> <?php echo $row["game_id"] ?></td>
+  </tr>
+<?php
